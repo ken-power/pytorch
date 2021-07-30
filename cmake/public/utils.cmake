@@ -348,7 +348,7 @@ macro(torch_cuda_based_add_library cuda_target)
   if(USE_ROCM)
     hip_add_library(${cuda_target} ${ARGN})
   elseif(USE_CUDA)
-    cuda_add_library(${cuda_target} ${ARGN})
+    add_library(${cuda_target} ${ARGN})
   else()
   endif()
 endmacro()
@@ -427,9 +427,20 @@ function(torch_compile_options libname)
         -Wall
         -Wextra
         -Wno-unused-parameter
+        -Wno-unused-variable
+        -Wno-unused-function
+        -Wno-unused-result
+        -Wno-unused-local-typedefs
         -Wno-missing-field-initializers
         -Wno-write-strings
         -Wno-unknown-pragmas
+        -Wno-type-limits
+        -Wno-array-bounds
+        -Wno-unknown-pragmas
+        -Wno-sign-compare
+        -Wno-strict-overflow
+        -Wno-strict-aliasing
+        -Wno-error=deprecated-declarations
         # Clang has an unfixed bug leading to spurious missing braces
         # warnings, see https://bugs.llvm.org/show_bug.cgi?id=21629
         -Wno-missing-braces
@@ -458,11 +469,13 @@ function(torch_compile_options libname)
     # Unfortunately, hidden visibility messes up some ubsan warnings because
     # templated classes crossing library boundary get duplicated (but identical)
     # definitions. It's easier to just disable it.
-    target_compile_options(${libname} PRIVATE "-fvisibility=hidden")
+    target_compile_options(${libname} PRIVATE
+        $<$<COMPILE_LANGUAGE:CXX>: -fvisibility=hidden>)
   endif()
 
   # Use -O2 for release builds (-O3 doesn't improve perf, and -Os results in perf regression)
-  target_compile_options(${libname} PRIVATE "$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:-O2>")
+  target_compile_options(${libname} PRIVATE
+      $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>>:-O2>)
 
 endfunction()
 

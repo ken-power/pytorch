@@ -511,6 +511,8 @@ endif()
 
 # setting nvcc arch flags
 torch_cuda_get_nvcc_gencode_flag(NVCC_FLAGS_EXTRA)
+# CMake 3.18 adds integrated support for architecture selection, but we can't rely on it
+set(CMAKE_CUDA_ARCHITECTURES OFF)
 list(APPEND CUDA_NVCC_FLAGS ${NVCC_FLAGS_EXTRA})
 message(STATUS "Added CUDA NVCC flags for: ${NVCC_FLAGS_EXTRA}")
 
@@ -569,3 +571,8 @@ list(APPEND CUDA_NVCC_FLAGS "--expt-relaxed-constexpr")
 
 # Set expt-extended-lambda to support lambda on device
 list(APPEND CUDA_NVCC_FLAGS "--expt-extended-lambda")
+
+string(PREPEND CMAKE_CUDA_FLAGS "--forward-unknown-to-host-compiler ")
+foreach(FLAG ${CUDA_NVCC_FLAGS})
+  string(APPEND CMAKE_CUDA_FLAGS " ${FLAG}")
+endforeach()
